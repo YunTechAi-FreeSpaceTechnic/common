@@ -42,13 +42,13 @@ if len(response) == 0:
 
 # 範例  印出模型回應的資訊
 for res in response:
-    logger.info(f"Model Creator: {res.model_creator_name}")  # 顯示模型創建者
-    logger.info(f"User ID: {res.userID}")  # 顯示userID
-    logger.info(f"Label Confidence: {res.label_confidence}")  # 顯示每類的分數
+    print(f"Model Creator: {res.model_creator_name}")  # 顯示模型創建者
+    print(f"User ID: {res.userID}")  # 顯示userID
+    print(f"Label Confidence: {res.label_confidence}")  # 顯示每類的分數
     print()
 
 # 範例  使用sum計算出最高分的類別
 label_confidence = [re.label_confidence for re in response]  # 取出label_confidence
 mix_label_confidence = np.sum(label_confidence, axis=0)  # 對0軸做sum
 max_index = np.argmax(mix_label_confidence)  # 取出最大值的index
-logger.info(f"Max confidence label index: {max_index}")  # 顯示最高分的類別
+print(f"Max confidence label index: {max_index}")  # 顯示最高分的類別
