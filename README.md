@@ -10,5 +10,5 @@ cd /your/project/folder/
 git submodule add https://github.com/YunTechAi-FreeSpaceTechnic/common.git common
 ```
  
-[建立模型時的範例和說明](https://github.com/YunTechAi-FreeSpaceTechnic/common/blob/main/example/build_model.py)  
-[呼叫模型時的範例和說明](https://github.com/YunTechAi-FreeSpaceTechnic/common/blob/main/example/invoke_model.py)
+[建立模型時的範例和說明 /example/build_model.py](https://github.com/YunTechAi-FreeSpaceTechnic/common/blob/main/example/build_model.py)  
+[呼叫模型時的範例和說明 /example/invoke_model.py](https://github.com/YunTechAi-FreeSpaceTechnic/common/blob/main/example/invoke_model.py)
