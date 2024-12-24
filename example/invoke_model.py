@@ -35,6 +35,7 @@ request = Request("123456789", history)
 response = mm.invoke(request)
 # response 是 tuple[Response, ...]
 
+# len(response) = 模型數量
 # 如果response 是空的，代表沒有模型回應
 if len(response) == 0:
     logger.error("No model response received.")
