@@ -18,7 +18,7 @@ mm = ModelBroadcaster(logger)  # 使用自訂logger進行初始化
 mm.check_in('localhost', 6666)
 mm.check_in('localhost', 6667)
 mm.check_in('localhost', 6668)
-# mm.check_in('host', port)  # 添加不同伺服器端口
+# mm.check_in('host', port)
 
 # --- -- - -- --- 使用 --- -- - -- ---
 # 建立一個聊天歷史的請求
@@ -26,16 +26,19 @@ history = [
     Text("user", "您好我有問題"),
     Text("model", "請問您的問題是什麼呢？"),
     Text("user", "我想問一下電梯會如何應對地震"),
+    # Text("誰", "內容"),
 ]
 request = Request("123456789", history)
+# Request("userID", 聊天歷史)
 
 # 呼叫模型
 response = mm.invoke(request)
+# response 是 tuple[Response, ...]
 
 # 如果response 是空的，代表沒有模型回應
 if len(response) == 0:
     logger.error("No model response received.")
-    raise Exception("No model response")
+    raise Exception("No model response received.")
 
 # 範例  印出模型回應的資訊
 for res in response:
