@@ -2,6 +2,7 @@ from typing import Iterable
 from numpy import float32
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
+from protocol.protocol import Protocol
 
 __Completion_Date = "2024_07_14_17:43"
 
@@ -14,7 +15,7 @@ class QuestionAnswerPair:
 
 
 @dataclass
-class Text:
+class Text(Protocol):
     role: str
     text: str
 
@@ -34,13 +35,13 @@ def history_to_dict(historys: Iterable[Text]) -> list[dict]:
 
 
 @dataclass
-class Request:
+class Request(Protocol):
     userID: str
     parts: Iterable[Text]
 
 
 @dataclass
-class Response:
+class Response(Protocol):
     model_creator_name: str
     userID: str  # 使用者ID
     label_confidence: Iterable[float32]  # index = label
