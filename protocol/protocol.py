@@ -7,7 +7,16 @@ from numpy import float32, ndarray
 
 class Protocol():
     def encode(self, buf: ByteBuffter):
-        print(self.__dict__.values())
+        '''
+        # Usage Example:
+        >>> @dataclass
+        >>> class DataA:
+        >>>    a: str
+        >>>    b: str
+        >>>
+        >>> buf = ByteBuffter()
+        >>> DataA("abc", "abc").encode(buf)
+        '''
         for d in self.__dict__.values():
             self.builtin_encode(buf, d)
 
@@ -29,6 +38,16 @@ class Protocol():
 
     @classmethod
     def decode(cls, data: ByteBuffter) -> Self:
+        '''
+        # Usage Example:
+        >>> @dataclass
+        >>> class DataA:
+        >>>    a: str
+        >>>    b: str
+        >>>
+        >>> buf = ByteBuffter()
+        >>> a = DataA.decode(buf)
+        '''
         args = []
         for name, param in inspect.signature(cls.__init__).parameters.items():
             if name != "self":
@@ -38,13 +57,13 @@ class Protocol():
 
         return cls(*args)
 
-    @classmethod
-    def builtin_decode(cls, t: Any, data: ByteBuffter) -> Any:
+    @staticmethod
+    def builtin_decode(t: Any, data: ByteBuffter) -> Any:
         if t == list or t == ndarray or isinstance(t, Iterable):
             size = data.read_int()
-            return [cls.builtin_decode(get_args(t)[0], data) for i in range(
-                size
-            )]
+            return [Protocol.builtin_decode(
+                get_args(t)[0], data
+            ) for i in range(size)]
         elif t == int:
             return data.read_int()
         elif t == float or t == float32:

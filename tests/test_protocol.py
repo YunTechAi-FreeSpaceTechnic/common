@@ -23,6 +23,5 @@ def test_request():
 
     buf = ByteBuffter()
     test_data.encode(buf)
-    print(test_data)
     test = Request.decode(buf)
     assert test_data == test
