@@ -6,6 +6,13 @@ from numpy import float32, ndarray
 
 
 class Protocol():
+    id = 0
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if 'id' not in cls.__dict__:
+            raise TypeError(f"Class {cls.__name__} must override the class variable")
+
     def encode(self, buf: ByteBuffter):
         '''
         # Usage Example:
@@ -17,6 +24,8 @@ class Protocol():
         >>> buf = ByteBuffter()
         >>> DataA("abc", "abc").encode(buf)
         '''
+        buf.write_byte(self.id)
+
         for d in self.__dict__.values():
             self.builtin_encode(buf, d)
 
@@ -63,7 +72,7 @@ class Protocol():
             size = data.read_int()
             return [Protocol.builtin_decode(
                 get_args(t)[0], data
-            ) for i in range(size)]
+            ) for _ in range(size)]
         elif t == int:
             return data.read_int()
         elif t == float or t == float32:
