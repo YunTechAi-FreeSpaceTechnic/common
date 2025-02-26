@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import Self, Any, get_args
 from collections.abc import Iterable
 import inspect
@@ -77,3 +78,27 @@ class Protocol():
             return data.read_string()
         elif issubclass(t, Protocol):
             return t.decode(data)
+
+@abstractmethod
+class Package:
+    class Request(ABC, Protocol):
+        pass
+
+    class Response(ABC, Protocol):
+        pass
+
+    @classmethod
+    def decode(cls, data: ByteBuffter):
+        subclass = cls.__subclasses__()
+        id = data.read_byte()
+
+        return subclass[id]
+
+    @classmethod
+    def encode(cls, buf: ByteBuffter, data: Protocol):
+        for index, subclass in enumerate(cls.__subclasses__()):
+            if type(data) in [cls for _, cls in inspect.getmembers(subclass) if inspect.isclass(cls)]:
+                buf.write_byte(index)
+
+        data.encode(buf)
+

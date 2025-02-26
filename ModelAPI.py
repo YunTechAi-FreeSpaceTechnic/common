@@ -1,8 +1,8 @@
-from typing import Iterable, Tuple
+from typing import Iterable
 from numpy import float32
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from protocol.protocol import Protocol, ByteBuffter
+from protocol.protocol import Package, Protocol
 
 __Completion_Date = "2024_07_14_17:43"
 
@@ -30,45 +30,35 @@ class ModelText(Text):
 def history_to_dict(historys: Iterable[Text]) -> list[dict]:
     return list({"role": h.role, "parts": [h.text]} for h in historys)
 
+class ModelInfo(Package):
+    @dataclass
+    class Request(Package.Request):
+        pass
 
-@dataclass
-class ModelInfo(Protocol):
-    model_creator_name: str
-    version: str
+    @dataclass
+    class Response(Package.Response):
+        model_creator_name: str
+        version: str
 
-@dataclass
-class PredictRequest(Protocol):
-    parts: Iterable[Text]
+class Predict(Package):
+    @dataclass
+    class Request(Package.Request):
+        parts: Iterable[Text]
 
-@dataclass
-class PredictResponse(Protocol):
-    label_confidence: Iterable[float32]  # index = label
-
-class Package:
-    ids = [ModelInfo, PredictRequest, PredictResponse]
-
-    @classmethod
-    def decode(cls, data: ByteBuffter) -> Tuple[int, Protocol]:
-        id = data.read_byte()
-
-        return id, cls.ids[id].decode(data)
-
-    @classmethod
-    def encode(cls, buf: ByteBuffter, data: Protocol):
-        buf.write_byte(cls.ids.index(type(data)))
-
-        data.encode(buf)
+    @dataclass
+    class Response(Package.Response):
+        label_confidence: Iterable[float32]  # index = label
 
 class ModelHandler(ABC):
     @abstractmethod
-    def model_info(self) -> ModelInfo:
+    def model_info(self) -> ModelInfo.Response:
         """
         請回傳你模型的資訊包含作者
         """
         pass
 
     @abstractmethod
-    def invoke(self, request: PredictRequest) -> PredictResponse:
+    def invoke(self, request: Predict.Request) -> Predict.Response:
         """請你在這裡實現模型推理。
         當模型被呼叫，將收到一個`Request`，計算並給出每類的分數
         回傳強制必須是`Response`。
