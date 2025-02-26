@@ -2,7 +2,7 @@ from typing import Iterable
 from numpy import float32
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from protocol.protocol import Protocol
+from protocol.protocol import Protocol, ByteBuffter
 
 __Completion_Date = "2024_07_14_17:43"
 
@@ -30,6 +30,12 @@ class ModelText(Text):
 def history_to_dict(historys: Iterable[Text]) -> list[dict]:
     return list({"role": h.role, "parts": [h.text]} for h in historys)
 
+
+@dataclass
+class ModelInfo(Protocol):
+    model_creator_name: str
+    version: str
+
 @dataclass
 class PredictRequest(Protocol):
     parts: Iterable[Text]
@@ -38,10 +44,20 @@ class PredictRequest(Protocol):
 class PredictResponse(Protocol):
     label_confidence: Iterable[float32]  # index = label
 
-@dataclass
-class ModelInfo(Protocol):
-    model_creator_name: str
-    version: str
+class Package:
+    ids = [ModelInfo, PredictRequest, PredictResponse]
+
+    @classmethod
+    def decode(cls, data: ByteBuffter) -> Protocol:
+        id = data.read_byte()
+
+        return cls.ids[id].decode(data)
+
+    @classmethod
+    def encode(cls, buf: ByteBuffter, data: Protocol):
+        buf.write_byte(cls.ids.index(type(data)))
+
+        data.encode(buf)
 
 class ModelHandler(ABC):
     @abstractmethod
