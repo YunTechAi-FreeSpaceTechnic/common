@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Tuple
 from numpy import float32
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
@@ -48,10 +48,10 @@ class Package:
     ids = [ModelInfo, PredictRequest, PredictResponse]
 
     @classmethod
-    def decode(cls, data: ByteBuffter) -> Protocol:
+    def decode(cls, data: ByteBuffter) -> Tuple[int, Protocol]:
         id = data.read_byte()
 
-        return cls.ids[id].decode(data)
+        return id, cls.ids[id].decode(data)
 
     @classmethod
     def encode(cls, buf: ByteBuffter, data: Protocol):

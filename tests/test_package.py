@@ -10,6 +10,6 @@ def test_package():
     buf = ByteBuffter()
     Package.encode(buf, test_data)
 
-    test = Package.decode(buf)
+    _, test = Package.decode(buf)
 
     assert (test_data.label_confidence == test.label_confidence).all()
