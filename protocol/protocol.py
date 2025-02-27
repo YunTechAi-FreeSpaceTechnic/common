@@ -1,7 +1,8 @@
+from abc import ABC, abstractmethod
 from typing import Self, Any, get_args
 from collections.abc import Iterable
 import inspect
-from protocol.byte_buffter import ByteBuffter
+from common.protocol.byte_buffter import ByteBuffter
 from numpy import float32, ndarray
 
 
@@ -17,8 +18,11 @@ class Protocol():
         >>> buf = ByteBuffter()
         >>> DataA("abc", "abc").encode(buf)
         '''
-        for d in self.__dict__.values():
-            self.builtin_encode(buf, d)
+        for k, d in self.__dict__.items():
+            if k == "id":
+                buf.write_byte(d)
+            else:
+                self.builtin_encode(buf, d)
 
     def builtin_encode(self, buf: ByteBuffter, data: Any):
         t = type(data)
@@ -50,7 +54,9 @@ class Protocol():
         '''
         args = []
         for name, param in inspect.signature(cls.__init__).parameters.items():
-            if name != "self":
+            if name == "id":
+                args.append(data.read_byte())
+            elif name != "self":
                 t = param.annotation
 
                 args.append(cls.builtin_decode(t, data))
@@ -63,7 +69,7 @@ class Protocol():
             size = data.read_int()
             return [Protocol.builtin_decode(
                 get_args(t)[0], data
-            ) for i in range(size)]
+            ) for _ in range(size)]
         elif t == int:
             return data.read_int()
         elif t == float or t == float32:
@@ -72,3 +78,27 @@ class Protocol():
             return data.read_string()
         elif issubclass(t, Protocol):
             return t.decode(data)
+
+@abstractmethod
+class Package:
+    class Request(ABC, Protocol):
+        pass
+
+    class Response(ABC, Protocol):
+        pass
+
+    @classmethod
+    def decode(cls, data: ByteBuffter):
+        subclass = cls.__subclasses__()
+        id = data.read_byte()
+
+        return subclass[id]
+
+    @classmethod
+    def encode(cls, buf: ByteBuffter, data: Protocol):
+        for index, subclass in enumerate(cls.__subclasses__()):
+            if type(data) in [cls for _, cls in inspect.getmembers(subclass) if inspect.isclass(cls)]:
+                buf.write_byte(index)
+
+        data.encode(buf)
+

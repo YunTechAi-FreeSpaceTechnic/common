@@ -2,10 +2,9 @@ from typing import Iterable
 from numpy import float32
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from protocol.protocol import Protocol
+from common.protocol.protocol import Package, Protocol
 
 __Completion_Date = "2024_07_14_17:43"
-
 
 @dataclass
 class QuestionAnswerPair:
@@ -13,12 +12,10 @@ class QuestionAnswerPair:
     answer: str
     label: int
 
-
 @dataclass
 class Text(Protocol):
     role: str
     text: str
-
 
 class UserText(Text):
     def __init__(self, text: str):
@@ -33,23 +30,35 @@ class ModelText(Text):
 def history_to_dict(historys: Iterable[Text]) -> list[dict]:
     return list({"role": h.role, "parts": [h.text]} for h in historys)
 
+class ModelInfo(Package):
+    @dataclass
+    class Request(Package.Request):
+        pass
 
-@dataclass
-class Request(Protocol):
-    userID: str
-    parts: Iterable[Text]
+    @dataclass
+    class Response(Package.Response):
+        model_creator_name: str
+        version: str
 
+class Predict(Package):
+    @dataclass
+    class Request(Package.Request):
+        parts: Iterable[Text]
 
-@dataclass
-class Response(Protocol):
-    model_creator_name: str
-    userID: str  # 使用者ID
-    label_confidence: Iterable[float32]  # index = label
-
+    @dataclass
+    class Response(Package.Response):
+        label_confidence: Iterable[float32]  # index = label
 
 class ModelHandler(ABC):
     @abstractmethod
-    def invoke(self, request: Request) -> Response:
+    def model_info(self) -> ModelInfo.Response:
+        """
+        請回傳你模型的資訊包含作者
+        """
+        pass
+
+    @abstractmethod
+    def invoke(self, request: Predict.Request) -> Predict.Response:
         """請你在這裡實現模型推理。
         當模型被呼叫，將收到一個`Request`，計算並給出每類的分數
         回傳強制必須是`Response`。

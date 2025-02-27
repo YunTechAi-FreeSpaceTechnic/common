@@ -15,6 +15,9 @@ class ByteBuffter():
         self.index += size
         return data
 
+    def read_byte(self) -> int:
+        return int.from_bytes(self.read(1), 'big')
+
     def read_int(self) -> int:
         return int.from_bytes(self.read(4), 'big')
 
@@ -30,6 +33,9 @@ class ByteBuffter():
     def write(self, data: bytes):
         self.data += data
         self.length += len(data)
+
+    def write_byte(self, data: int):
+        self.write(data.to_bytes(1, 'big'))
 
     def write_int(self, data: int):
         self.write(data.to_bytes(4, 'big'))
