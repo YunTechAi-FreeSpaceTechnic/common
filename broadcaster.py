@@ -4,10 +4,10 @@ from logging import Logger
 from typing import List, Tuple
 from asyncio import AbstractEventLoop
 
-from protocol.byte_buffter import ByteBuffter
-from protocol.tcp import TCPClient
+from common.protocol.byte_buffter import ByteBuffter
+from common.protocol.tcp import TCPClient
 
-from ModelAPI import Request, Response
+from common.ModelAPI import Request, Response
 
 
 class ModelBroadcaster:

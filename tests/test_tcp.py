@@ -1,6 +1,6 @@
-from protocol.tcp import TCPServer, TCPClient
-from protocol.byte_buffter import ByteBuffter
-from ModelAPI import Predict, Text
+from common.protocol.tcp import TCPServer, TCPClient
+from common.protocol.byte_buffter import ByteBuffter
+from common.ModelAPI import Predict, Text
 import pytest
 import asyncio
 import logging

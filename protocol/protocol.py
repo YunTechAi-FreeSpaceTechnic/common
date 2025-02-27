@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Self, Any, get_args
 from collections.abc import Iterable
 import inspect
-from protocol.byte_buffter import ByteBuffter
+from common.protocol.byte_buffter import ByteBuffter
 from numpy import float32, ndarray
 
 

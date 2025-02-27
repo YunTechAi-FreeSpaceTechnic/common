@@ -2,7 +2,7 @@ from typing import Iterable
 from numpy import float32
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from protocol.protocol import Package, Protocol
+from common.protocol.protocol import Package, Protocol
 
 __Completion_Date = "2024_07_14_17:43"
 

@@ -1,5 +1,5 @@
-from ModelAPI import Predict, Text
-from protocol.byte_buffter import ByteBuffter
+from common.ModelAPI import Predict, Text
+from common.protocol.byte_buffter import ByteBuffter
 from numpy import float32, array
 
 
