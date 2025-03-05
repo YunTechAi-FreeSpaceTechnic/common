@@ -27,7 +27,7 @@ class Protocol():
     def builtin_encode(self, buf: ByteBuffter, data: Any):
         t = type(data)
 
-        if t == list or t == ndarray:
+        if t == list or t == ndarray or t == tuple:
             buf.write_int(len(data))
             for a in data:
                 self.builtin_encode(buf, a)
@@ -65,7 +65,7 @@ class Protocol():
 
     @staticmethod
     def builtin_decode(t: Any, data: ByteBuffter) -> Any:
-        if t == list or t == ndarray or isinstance(t, Iterable):
+        if t == list or t == ndarray or isinstance(t, Iterable) or t == tuple:
             size = data.read_int()
             return [Protocol.builtin_decode(
                 get_args(t)[0], data
