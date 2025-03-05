@@ -30,6 +30,15 @@ class ModelText(Text):
 def history_to_dict(historys: Iterable[Text]) -> list[dict]:
     return list({"role": h.role, "parts": [h.text]} for h in historys)
 
+class Error(Package):
+    @dataclass
+    class Request(Package.Request):
+        pass
+
+    @dataclass
+    class Response(Package.Response):
+        message: str
+
 class ModelInfo(Package):
     @dataclass
     class Request(Package.Request):
