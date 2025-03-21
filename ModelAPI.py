@@ -6,23 +6,28 @@ from common.protocol.protocol import Package, Protocol
 
 __Completion_Date = "2024_07_14_17:43"
 
+
 @dataclass
 class QuestionAnswerPair:
     question: str
     answer: str
     label: int
 
+
 @dataclass
 class Text(Protocol):
     role: str
     text: str
 
+
 class UserText(Text):
+
     def __init__(self, text: str):
         super().__init__("user", text)
 
 
 class ModelText(Text):
+
     def __init__(self, text: str):
         super().__init__("model", text)
 
@@ -30,7 +35,9 @@ class ModelText(Text):
 def history_to_dict(historys: Iterable[Text]) -> list[dict]:
     return list({"role": h.role, "parts": [h.text]} for h in historys)
 
+
 class Error(Package):
+
     @dataclass
     class Request(Package.Request):
         pass
@@ -39,7 +46,9 @@ class Error(Package):
     class Response(Package.Response):
         message: str
 
+
 class ModelInfo(Package):
+
     @dataclass
     class Request(Package.Request):
         pass
@@ -49,7 +58,9 @@ class ModelInfo(Package):
         model_creator_name: str
         version: str
 
+
 class Predict(Package):
+
     @dataclass
     class Request(Package.Request):
         parts: Iterable[Text]
@@ -58,7 +69,9 @@ class Predict(Package):
     class Response(Package.Response):
         label_confidence: Iterable[float32]  # index = label
 
+
 class ModelHandler(ABC):
+
     @abstractmethod
     def model_info(self) -> ModelInfo.Response:
         """
