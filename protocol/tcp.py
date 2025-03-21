@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Callable
 from socket import SocketType, socket, AF_INET, SOCK_STREAM
 import selectors
@@ -11,8 +12,7 @@ SOCKET_BUFFET_SIZE = 8192
 class TCPServer():
     def __init__(
             self, logger: Logger, host: str = "0.0.0.0",
-            port=6666, callback: Callable[[bytes], bytes] = lambda x: x
-    ):
+            port=6666, callback: Callable[[bytearray], bytearray] = lambda x: x):
         self.port = port
         self.host = host
         self.calback = callback
@@ -42,51 +42,58 @@ class TCPServer():
         conn.setblocking(False)
         executor.submit(Connection(self.logger, conn, addr, self.calback).listen)
 
+    def close(self):
+        self.is_close = True
+
 class Connection():
-    def __init__(self, logger: Logger, conn: SocketType, addr,
-                 callback: Callable[[bytes], bytes]
-                 ):
+    def __init__(self, logger: Logger, conn: socket, addr,
+                 callback: Callable[[bytearray], bytearray]):
         self.logger = logger
         self.conn = conn
         self.addr = addr
         self.callback = callback
+        self.loop = asyncio.new_event_loop()
 
-    def send(self, data):
+    async def send(self, data):
         size = len(data)
 
-        self.conn.send(size.to_bytes(4))
-        self.conn.send(data)
+        await self.loop.sock_sendall(self.conn, size.to_bytes(4))
+        await self.loop.sock_sendall(self.conn, data)
 
-    def recv(self):
-        size = self.conn.recv(4)
+    async def recv(self):
         buf_bytes = bytearray()
+        size = await self.loop.sock_recv(self.conn, 4)
         self.logger.debug(f"Server received size: {size}")
 
         if not size:
             return None
         size = int.from_bytes(size)
 
-        for i in range(int(size / SOCKET_BUFFET_SIZE)):
-            buf_bytes.extend(self.conn.recv(SOCKET_BUFFET_SIZE))
+        for _ in range(int(size / SOCKET_BUFFET_SIZE)):
+            buf_bytes.extend(await self.loop.sock_recv(self.conn, SOCKET_BUFFET_SIZE))
 
-        buf_bytes.extend(self.conn.recv(size % SOCKET_BUFFET_SIZE))
+        buf_bytes.extend(await self.loop.sock_recv(self.conn, size % SOCKET_BUFFET_SIZE))
 
         return buf_bytes
 
     def listen(self):
-        data = self.recv()
-
-        if not data:
-            self.logger.info(f"Connection from {self.addr} closed.")
-            return
-
-        self.logger.debug(f"Server received data: {data}")
+        asyncio.set_event_loop(self.loop)
 
         try:
-            self.send(self.callback(data))
-        except:
-            return
+            while True:
+                data = asyncio.run(self.recv())
 
+                if not data:
+                    break
+
+                self.logger.debug(f"Server received data: {data}")
+                asyncio.run(self.send(self.callback(data)))
+        finally:
+            self.close()
+
+    def close(self):
+        self.logger.info(f"Connection from {self.addr} closed.")
+        self.conn.close()
 
 class TCPClient():
     def __init__(self, loop: AbstractEventLoop, host="localhost", port=6666):
@@ -96,7 +103,7 @@ class TCPClient():
         self.socket = socket(AF_INET, SOCK_STREAM)
         self.socket.connect((host, port))
 
-    async def send(self, data: bytes) -> bytes | None:
+    async def send(self, data: bytes) -> bytearray | None:
         size = len(data)
         await self.loop.sock_sendall(self.socket, size.to_bytes(4) + data)
 
@@ -111,7 +118,7 @@ class TCPClient():
 
         size = int.from_bytes(size)
 
-        for i in range(int(size / SOCKET_BUFFET_SIZE)):
+        for _ in range(int(size / SOCKET_BUFFET_SIZE)):
             buf_bytes.extend(await self.loop.sock_recv(
                 self.socket, SOCKET_BUFFET_SIZE))
 
