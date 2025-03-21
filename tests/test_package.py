@@ -4,8 +4,7 @@ from numpy import float32, array
 
 
 def test_package():
-    test_data = Predict.Response(
-                         array([1.0, 2.0, 3.0], dtype=float32))
+    test_data = Predict.Response(array([1.0, 2.0, 3.0], dtype=float32))
 
     buf = ByteBuffter()
     Package.encode(buf, test_data)

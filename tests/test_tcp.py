@@ -6,7 +6,7 @@ import asyncio
 import logging
 import threading
 
-pytest_plugins = ('pytest_asyncio',)
+pytest_plugins = ('pytest_asyncio', )
 
 
 @pytest.mark.asyncio

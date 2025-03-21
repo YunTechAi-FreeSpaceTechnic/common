@@ -3,6 +3,7 @@ from numpy import float32
 
 
 class ByteBuffter():
+
     def __init__(self, data: bytes = bytes()):
         self.data = data
         self.index = 0

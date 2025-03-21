@@ -7,6 +7,7 @@ from numpy import float32, ndarray
 
 
 class Protocol():
+
     def encode(self, buf: ByteBuffter):
         '''
         # Usage Example:
@@ -67,9 +68,10 @@ class Protocol():
     def builtin_decode(t: Any, data: ByteBuffter) -> Any:
         if t == list or t == ndarray or isinstance(t, Iterable) or t == tuple:
             size = data.read_int()
-            return [Protocol.builtin_decode(
-                get_args(t)[0], data
-            ) for _ in range(size)]
+            return [
+                Protocol.builtin_decode(get_args(t)[0], data)
+                for _ in range(size)
+            ]
         elif t == int:
             return data.read_int()
         elif t == float or t == float32:
@@ -79,8 +81,10 @@ class Protocol():
         elif issubclass(t, Protocol):
             return t.decode(data)
 
+
 @abstractmethod
 class Package:
+
     class Request(ABC, Protocol):
         pass
 
@@ -97,8 +101,10 @@ class Package:
     @classmethod
     def encode(cls, buf: ByteBuffter, data: Protocol):
         for index, subclass in enumerate(cls.__subclasses__()):
-            if type(data) in [cls for _, cls in inspect.getmembers(subclass) if inspect.isclass(cls)]:
+            if type(data) in [
+                    cls for _, cls in inspect.getmembers(subclass)
+                    if inspect.isclass(cls)
+            ]:
                 buf.write_byte(index)
 
         data.encode(buf)
-

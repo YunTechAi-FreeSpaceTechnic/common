@@ -10,9 +10,12 @@ SOCKET_BUFFET_SIZE = 8192
 
 
 class TCPServer():
-    def __init__(
-            self, logger: Logger, host: str = "0.0.0.0",
-            port=6666, callback: Callable[[bytearray], bytearray] = lambda x: x):
+
+    def __init__(self,
+                 logger: Logger,
+                 host: str = "0.0.0.0",
+                 port=6666,
+                 callback: Callable[[bytearray], bytearray] = lambda x: x):
         self.port = port
         self.host = host
         self.calback = callback
@@ -36,16 +39,20 @@ class TCPServer():
                     if key.data is None:
                         self.accept_connections(executor)
 
-    def accept_connections(self, executor: concurrent.futures.ThreadPoolExecutor):
+    def accept_connections(self,
+                           executor: concurrent.futures.ThreadPoolExecutor):
         conn, addr = self.socket.accept()
         self.logger.info(f"Accepted connection from {addr}")
         conn.setblocking(False)
-        executor.submit(Connection(self.logger, conn, addr, self.calback).listen)
+        executor.submit(
+            Connection(self.logger, conn, addr, self.calback).listen)
 
     def close(self):
         self.is_close = True
 
+
 class Connection():
+
     def __init__(self, logger: Logger, conn: socket, addr,
                  callback: Callable[[bytearray], bytearray]):
         self.logger = logger
@@ -70,9 +77,11 @@ class Connection():
         size = int.from_bytes(size)
 
         for _ in range(int(size / SOCKET_BUFFET_SIZE)):
-            buf_bytes.extend(await self.loop.sock_recv(self.conn, SOCKET_BUFFET_SIZE))
+            buf_bytes.extend(await self.loop.sock_recv(self.conn,
+                                                       SOCKET_BUFFET_SIZE))
 
-        buf_bytes.extend(await self.loop.sock_recv(self.conn, size % SOCKET_BUFFET_SIZE))
+        buf_bytes.extend(await self.loop.sock_recv(self.conn,
+                                                   size % SOCKET_BUFFET_SIZE))
 
         return buf_bytes
 
@@ -95,7 +104,9 @@ class Connection():
         self.logger.info(f"Connection from {self.addr} closed.")
         self.conn.close()
 
+
 class TCPClient():
+
     def __init__(self, loop: AbstractEventLoop, host="localhost", port=6666):
         self.loop = loop
         self.host = host
@@ -119,12 +130,11 @@ class TCPClient():
         size = int.from_bytes(size)
 
         for _ in range(int(size / SOCKET_BUFFET_SIZE)):
-            buf_bytes.extend(await self.loop.sock_recv(
-                self.socket, SOCKET_BUFFET_SIZE))
+            buf_bytes.extend(await self.loop.sock_recv(self.socket,
+                                                       SOCKET_BUFFET_SIZE))
 
-        buf_bytes.extend(await self.loop.sock_recv(
-            self.socket, SOCKET_BUFFET_SIZE
-        ))
+        buf_bytes.extend(await self.loop.sock_recv(self.socket,
+                                                   SOCKET_BUFFET_SIZE))
 
         return buf_bytes
 
