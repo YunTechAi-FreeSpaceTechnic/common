@@ -1,9 +1,9 @@
 from collections.abc import Callable
 from socket import SocketType, socket, AF_INET, SOCK_STREAM
-import threading
+import selectors
 from asyncio import AbstractEventLoop
-from typing import List
 from logging import Logger
+import concurrent.futures
 
 SOCKET_BUFFET_SIZE = 8192
 
@@ -16,48 +16,40 @@ class TCPServer():
         self.port = port
         self.host = host
         self.calback = callback
-        self.socket = socket(AF_INET, SOCK_STREAM)
-        self.socket.bind((self.host, self.port))
-        self.listen_thread = threading.Thread(target=self.listen)
-        self.connections: List[Connection] = []
-        self.listen_thread.daemon = True
         self.logger = logger
+        self.socket = socket(AF_INET, SOCK_STREAM)
+        self.sel = selectors.DefaultSelector()
+        self.is_close = False
+
+        self.socket.bind((self.host, self.port))
 
     def listen(self):
         self.logger.info("Listening for connections...")
-        self.socket.listen()
         self.socket.setblocking(False)
+        self.socket.listen(100)
+        self.sel.register(self.socket, selectors.EVENT_READ, data=None)
 
-        while True:
-            try:
-                conn, addr = self.socket.accept()
-                connection = Connection(
-                    self.logger, conn, addr,
-                    lambda: self.connections.remove(connection), self.calback
-                )
-                self.connections.append(connection)
-            except:
-                pass
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            while not self.is_close:
+                events = self.sel.select(timeout=5)
+                for key, _ in events:
+                    if key.data is None:
+                        self.accept_connections(executor)
 
-    def close(self):
-        for connection in self.connections:
-            connection.close()
-            connection.thread.join()
-        self.socket.close()
-
+    def accept_connections(self, executor: concurrent.futures.ThreadPoolExecutor):
+        conn, addr = self.socket.accept()
+        self.logger.info(f"Accepted connection from {addr}")
+        conn.setblocking(False)
+        executor.submit(Connection(self.logger, conn, addr, self.calback).listen)
 
 class Connection():
     def __init__(self, logger: Logger, conn: SocketType, addr,
-                 on_close: Callable, callback: Callable[[bytes], bytes]
+                 callback: Callable[[bytes], bytes]
                  ):
         self.logger = logger
         self.conn = conn
         self.addr = addr
         self.callback = callback
-        self.thread = threading.Thread(target=self.listen)
-        self.thread.daemon = True
-        self.on_close = on_close
-        self.thread.start()
 
     def send(self, data):
         size = len(data)
@@ -81,25 +73,18 @@ class Connection():
 
         return buf_bytes
 
-    def close(self):
-        self.conn.close()
-        self.on_close()
-
     def listen(self):
         data = self.recv()
 
         if not data:
             self.logger.info(f"Connection from {self.addr} closed.")
-            self.on_close()
             return
 
         self.logger.debug(f"Server received data: {data}")
 
         try:
             self.send(self.callback(data))
-            self.on_close()
         except:
-            self.on_close()
             return
 
 
