@@ -1,4 +1,5 @@
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from collections.abc import Callable
 from asyncio import Server, StreamReader, StreamWriter
 from logging import Logger
@@ -17,29 +18,27 @@ class TCPServer():
         self.host = host
         self.callback = callback
         self.logger = logger
-        self.is_close = False
 
-    async def server(self):
+    async def server(self, executor: ThreadPoolExecutor):
         return await asyncio.start_server(
-            Connection(self.logger, self.callback).listen, self.host,
+            Connection(self.logger, executor, self.callback).listen, self.host,
             self.port)
 
-    async def listen(self, server: Server | None = None):
-        server = server or await self.server()
-        self.logger.info("Listening for connections...")
+    async def listen(self, server: Server | None = None, max_workers: int = 5):
+        with ThreadPoolExecutor(max_workers) as executor:
+            server = server or await self.server(executor)
+            self.logger.info("Listening for connections...")
 
-        await server.serve_forever()
-
-    def close(self):
-        self.is_close = True
-
+            await server.serve_forever()
 
 class Connection():
 
-    def __init__(self, logger: Logger, callback: Callable[[bytearray],
+    def __init__(self, logger: Logger, executor: ThreadPoolExecutor, callback: Callable[[bytearray],
                                                           bytearray]):
         self.logger = logger
         self.callback = callback
+        self.executor = executor
+        self.loop = asyncio.get_running_loop()
 
     async def send(self, data):
         size = len(data)
@@ -78,7 +77,9 @@ class Connection():
                     break
 
                 self.logger.debug(f"Server received data: {data}")
-                await self.send(self.callback(data))
+                response = await self.loop.run_in_executor(self.executor, self.callback, data)
+
+                await self.send(response)
         finally:
             self.close()
 
@@ -93,7 +94,6 @@ class TCPClient():
         self.port = port
 
     async def connection(self):
-        print(self.host, self.port)
         self.reader, self.writer = await asyncio.open_connection(
             self.host, self.port)
 
