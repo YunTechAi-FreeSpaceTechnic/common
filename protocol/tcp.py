@@ -92,10 +92,12 @@ class TCPClient():
     def __init__(self, host="localhost", port=6666):
         self.host = host
         self.port = port
+        self.connected = False
 
     async def connection(self):
         self.reader, self.writer = await asyncio.open_connection(
             self.host, self.port)
+        self.connected = True
 
     async def send(self, data: bytes) -> bytearray | None:
         size = len(data)
