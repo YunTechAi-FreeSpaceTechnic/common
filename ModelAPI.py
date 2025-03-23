@@ -2,6 +2,7 @@ from typing import Iterable
 from numpy import float32
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
+from enum import Enum
 from common.protocol.protocol import Package, Protocol
 
 __Completion_Date = "2024_07_14_17:43"
@@ -35,6 +36,9 @@ class ModelText(Text):
 def history_to_dict(historys: Iterable[Text]) -> list[dict]:
     return list({"role": h.role, "parts": [h.text]} for h in historys)
 
+class ModelType(Enum):
+    Ensemble = 1
+    Predict = 2
 
 class Error(Package):
 
@@ -58,7 +62,7 @@ class ModelInfo(Package):
         name: str
         creator_name: str
         version: str
-        model_type: str
+        model_type: ModelType
 
 
 class Predict(Package):

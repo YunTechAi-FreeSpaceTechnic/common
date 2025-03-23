@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Self, Any, get_args
+from enum import Enum
+from typing import ClassVar, Self, Any, get_args
 from collections.abc import Iterable
 import inspect
 from common.protocol.byte_buffter import ByteBuffter
@@ -38,6 +39,8 @@ class Protocol():
             buf.write_float(data)
         elif t == str:
             buf.write_string(data)
+        elif issubclass(t, Enum):
+            buf.write_byte(data.value)
         elif issubclass(t, Protocol):
             data.encode(buf)
 
@@ -66,7 +69,9 @@ class Protocol():
 
     @staticmethod
     def builtin_decode(t: Any, data: ByteBuffter) -> Any:
-        if t == list or t == ndarray or isinstance(t, Iterable) or t == tuple:
+        if isinstance(t, type) and issubclass(t, Enum):
+            return t(data.read_byte())
+        elif t == list or t == ndarray or isinstance(t, Iterable) or t == tuple:
             size = data.read_int()
             return [
                 Protocol.builtin_decode(get_args(t)[0], data)

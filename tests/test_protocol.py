@@ -1,4 +1,4 @@
-from common.ModelAPI import Predict, Text
+from common.ModelAPI import Predict, Text, ModelInfo, ModelType
 from common.protocol.byte_buffter import ByteBuffter
 from numpy import float32, array
 
@@ -20,3 +20,12 @@ def test_request():
     test_data.encode(buf)
     test = Predict.Request.decode(buf)
     assert test_data == test
+
+def test_info():
+    test_data = ModelInfo.Response("Predict", "xiaoxigua", "1.0", ModelType.Predict)
+
+    buf = ByteBuffter()
+    test_data.encode(buf)
+    test = ModelInfo.Response.decode(buf)
+
+    assert test == test_data
