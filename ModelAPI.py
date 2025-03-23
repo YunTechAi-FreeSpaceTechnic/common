@@ -55,8 +55,10 @@ class ModelInfo(Package):
 
     @dataclass
     class Response(Package.Response):
-        model_creator_name: str
+        name: str
+        creator_name: str
         version: str
+        model_type: str
 
 
 class Predict(Package):
