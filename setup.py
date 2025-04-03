@@ -23,9 +23,6 @@ setup(
             "pytest-asyncio"
         ],
     },
-    package_data={
-        "common": ["data/*"]
-    },
     entry_points={
         "console_scripts": [
             "model-server-attack=common.tools.attack:main"
